@@ -1,1 +1,33 @@
+name: Build DPF Monitor firmware
 
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'firmware/**'
+      - '.github/workflows/build-firmware.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: platformio-${{ runner.os }}-${{ hashFiles('firmware/platformio.ini') }}
+          restore-keys: platformio-${{ runner.os }}-
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install PlatformIO
+        run: pip install platformio
+      - name: Build firmware
+        working-directory: firmware
+        run: pio run -e esp32-s3-devkitc-1
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DPF-Monitor-v0.1-ESP32-S3
+          path: firmware/.pio/build/esp32-s3-devkitc-1/firmware.bin
+          if-no-files-found: error
